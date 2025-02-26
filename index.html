@@ -1,0 +1,38 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>RAG Chatbot</title>
+    <style>
+        body { font-family: Arial, sans-serif; text-align: center; }
+        #chatbox { width: 60%; height: 400px; border: 1px solid #ccc; padding: 10px; overflow-y: scroll; margin: 0 auto; }
+        #input-box { width: 60%; padding: 10px; margin-top: 10px; }
+        button { padding: 10px; }
+    </style>
+</head>
+<body>
+    <h2>RAG-Powered Chatbot</h2>
+    <div id="chatbox"></div>
+    <input type="text" id="input-box" placeholder="Type your message...">
+    <button onclick="sendMessage()">Send</button>
+
+    <script>
+        let socket = new WebSocket("ws://localhost:8000/chat");
+
+        socket.onmessage = function(event) {
+            let chatbox = document.getElementById("chatbox");
+            chatbox.innerHTML += "<p><b>Bot:</b> " + event.data + "</p>";
+            chatbox.scrollTop = chatbox.scrollHeight;
+        };
+
+        function sendMessage() {
+            let inputBox = document.getElementById("input-box");
+            let message = inputBox.value;
+            document.getElementById("chatbox").innerHTML += "<p><b>You:</b> " + message + "</p>";
+            socket.send(message);
+            inputBox.value = "";
+        }
+    </script>
+</body>
+</html>
