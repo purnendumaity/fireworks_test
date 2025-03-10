@@ -1,0 +1,81 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>RAG Chatbot</title>
+     <script>
+        // Auto-clear cache by forcing a hard reload on first page load
+        window.onload = function() {
+            if (!sessionStorage.getItem("cacheCleared")) {
+                sessionStorage.setItem("cacheCleared", "true");
+                location.reload(true); // Forces a hard reload
+            }
+        };
+    </script>
+    <style>
+        body { font-family: Arial, sans-serif; text-align: center; }
+        #chat-container { display: flex; align-items: center; justify-content: center; margin-bottom: 10px; }
+        #title { font-size: 24px; font-weight: bold; margin-right: 10px; display: flex; align-items: center; }
+        #chatbox { width: 60%; height: 400px; border: 1px solid #ccc; padding: 10px; overflow-y: auto; margin: 0 auto; text-align: left; }
+        #input-container { display: flex; justify-content: center; align-items: center; margin-top: 10px; }
+        #input-box { width: 50%; padding: 10px; }
+        button { padding: 10px; margin-left: 10px; cursor: pointer; }
+        #answer-mode { margin-left: 20px; padding: 5px; }
+        .emoji { font-size: 24px; margin-right: 8px; filter: invert(40%) sepia(90%) saturate(200%) hue-rotate(180deg); }
+    </style>
+</head>
+<body>
+    <div id="chat-container">
+        <div id="title">
+            <span class="emoji">🌀</span> RAG-Powered Chatbot
+        </div>
+        <select id="answer-mode">
+            <option value="KB_ONLY" selected>KB_ONLY</option>
+            <option value="LLM_ONLY">LLM_ONLY</option>
+            <option value="HYBRID">HYBRID</option>
+        </select>
+    </div>
+
+    <div id="chatbox"></div>
+
+    <div id="input-container">
+        <input type="text" id="input-box" placeholder="Type your message...">
+        <button onclick="sendMessage()">Send</button>
+    </div>
+
+    <script>
+        let socket = new WebSocket("ws://localhost:8000/chat");
+
+        // Handle incoming messages from the chatbot
+        socket.onmessage = function(event) {
+            let chatbox = document.getElementById("chatbox");
+            chatbox.innerHTML += "<p><b>Bot:</b> " + event.data + "</p>";
+            chatbox.scrollTop = chatbox.scrollHeight; // Auto-scroll to the latest message
+        };
+
+        function sendMessage() {
+            const inputBox = document.getElementById("input-box");
+            const message = inputBox.value.trim(); // Get user input
+            const answerMode = document.getElementById("answer-mode").value; // Get selected answer mode
+
+            if (message !== "") {
+                const chatbox = document.getElementById("chatbox");
+
+                // Display the message in the chatbox
+                chatbox.innerHTML += "<p><b>You:</b> " + message + "</p>";
+
+                // Ensure WebSocket is open before sending
+                if (socket.readyState === WebSocket.OPEN) {
+                    socket.send(JSON.stringify({ question: message, mode: answerMode }));
+                } else {
+                    console.error("WebSocket connection is not open.");
+                }
+
+                // Clear the input box after sending
+                inputBox.value = "";
+            }
+        }
+    </script>
+</body>
+</html>
